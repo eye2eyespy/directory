@@ -1,0 +1,2 @@
+external_id,industry,business_name,slug,description,phone,email,website,address_1,city,state,zip,country,latitude,longitude,google_place_id,video_url,hero_image_url,featured,sponsored,verified,published
+ROOF-000101,roofers,Palm Court Roofing,palm-court-roofing,Residential shingle and metal work in Orlando.,(407) 555-0101,,https://example.com/palm,100 Pine St,Orlando,Florida,32801,US,28.5383,-81.3792,,,,false,false,true,true

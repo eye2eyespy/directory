@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <rect fill="#1B3A4B" width="1200" height="800"/>
+  <rect fill="#C45C26" x="0" y="740" width="1200" height="60"/>
+  <text x="80" y="400" fill="#F4EFE6" font-family="Georgia, serif" font-size="42">Directory</text>
+</svg>

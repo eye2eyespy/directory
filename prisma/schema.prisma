@@ -1,0 +1,769 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  SALES
+  MEMBER
+}
+
+enum SwapFormMode {
+  GOODS
+  APPAREL
+  DIGITAL
+  SERVICE
+}
+
+enum ListingStatus {
+  AVAILABLE
+  PENDING
+  SOLD
+}
+
+enum SwapThreadStatus {
+  OPEN
+  PROPOSED
+  CONFIRMED
+  COMPLETED
+}
+
+enum SwapProposalStatus {
+  PENDING
+  ACCEPTED
+  CHANGES
+  SUPERSEDED
+}
+
+enum MediaType {
+  VIDEO
+  IMAGE
+  LOGO
+}
+
+enum MediaSource {
+  UPLOAD
+  YOUTUBE
+  VIMEO
+  GOOGLE_PLACES
+  EXTERNAL
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+  ONE_TIME
+}
+
+enum PromotionStatus {
+  PENDING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  EXPIRED
+  COMPLIMENTARY
+}
+
+enum BlogStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+enum ImportJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(ADMIN)
+  swapProfile  SwapProfile?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Industry {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  active      Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  businesses  Business[]
+  categories  Category[]
+  services    Service[]
+  customFields CustomField[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Category {
+  id          String             @id @default(cuid())
+  industryId  String
+  industry    Industry           @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String
+  description String?
+  sortOrder   Int                @default(0)
+  businesses  BusinessCategory[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@unique([industryId, slug])
+}
+
+model Service {
+  id         String            @id @default(cuid())
+  industryId String
+  industry   Industry          @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  name       String
+  slug       String
+  sortOrder  Int               @default(0)
+  businesses BusinessService[]
+
+  @@unique([industryId, slug])
+}
+
+model CustomField {
+  id         String                @id @default(cuid())
+  industryId String
+  industry   Industry              @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  name       String
+  slug       String
+  fieldType  String                @default("text")
+  options    String?
+  sortOrder  Int                   @default(0)
+  values     BusinessCustomValue[]
+
+  @@unique([industryId, slug])
+}
+
+model State {
+  id       String   @id @default(cuid())
+  name     String
+  slug     String   @unique
+  abbr     String   @unique
+  counties County[]
+  cities   City[]
+}
+
+model County {
+  id      String @id @default(cuid())
+  stateId String
+  state   State  @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  name    String
+  slug    String
+  cities  City[]
+
+  @@unique([stateId, slug])
+}
+
+model City {
+  id        String   @id @default(cuid())
+  stateId   String
+  state     State    @relation(fields: [stateId], references: [id])
+  countyId  String?
+  county    County?  @relation(fields: [countyId], references: [id])
+  name      String
+  slug      String
+  latitude  Float?
+  longitude Float?
+  zipCodes  ZipCode[]
+
+  @@unique([stateId, slug])
+}
+
+model ZipCode {
+  id     String @id @default(cuid())
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  code   String @unique
+}
+
+model Business {
+  id                String   @id @default(cuid())
+  externalId        String?  @unique
+  industryId        String
+  industry          Industry @relation(fields: [industryId], references: [id])
+
+  name              String
+  slug              String
+  description       String?
+  shortDescription  String?
+
+  phone             String?
+  email             String?
+  websiteUrl        String?
+
+  googlePlaceId     String?
+  googleRating      Float?
+  googleReviewCount Int?
+
+  address1          String?
+  address2          String?
+  city              String?
+  citySlug          String?
+  state             String?
+  stateSlug         String?
+  postalCode        String?
+  country           String   @default("US")
+
+  latitude          Float?
+  longitude         Float?
+
+  yearEstablished   Int?
+  verified          Boolean  @default(false)
+  featured          Boolean  @default(false)
+  sponsored         Boolean  @default(false)
+  homepageFeatured  Boolean  @default(false)
+  published         Boolean  @default(false)
+  claimed           Boolean  @default(false)
+
+  seoTitle          String?
+  metaDescription   String?
+  canonicalUrl      String?
+  ogImageUrl        String?
+
+  customFields      String?
+
+  categories        BusinessCategory[]
+  services          BusinessService[]
+  locations         BusinessLocation[]
+  hours             BusinessHours[]
+  media             BusinessMedia[]
+  social            BusinessSocialProfile[]
+  credentials       BusinessCredential[]
+  awards            BusinessAward[]
+  fieldValues       BusinessCustomValue[]
+  reviews           GoogleReview[]
+  promotions        BusinessPromotion[]
+  leads             Lead[]
+  events            AnalyticsEvent[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([industryId, slug])
+  @@index([externalId])
+  @@index([googlePlaceId])
+  @@index([city, state])
+  @@index([published, featured, sponsored])
+}
+
+model BusinessCategory {
+  businessId String
+  categoryId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([businessId, categoryId])
+}
+
+model BusinessService {
+  businessId String
+  serviceId  String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([businessId, serviceId])
+}
+
+model BusinessLocation {
+  id        String   @id @default(cuid())
+  businessId String
+  business  Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  label     String?
+  city      String
+  state     String?
+  zip       String?
+  isPrimary Boolean  @default(false)
+}
+
+model BusinessHours {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  dayOfWeek  Int
+  openTime   String?
+  closeTime  String?
+  closed     Boolean  @default(false)
+}
+
+model BusinessMedia {
+  id           String      @id @default(cuid())
+  businessId   String
+  business     Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type         MediaType
+  source       MediaSource
+  url          String?
+  thumbnailUrl String?
+  title        String?
+  caption      String?
+  featured     Boolean     @default(false)
+  sortOrder    Int         @default(0)
+  createdAt    DateTime    @default(now())
+}
+
+model BusinessSocialProfile {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  network    String
+  url        String
+}
+
+model BusinessCredential {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  sortOrder  Int      @default(0)
+}
+
+model BusinessAward {
+  id           String   @id @default(cuid())
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name         String
+  organization String?
+  year         Int?
+  description  String?
+  imageUrl     String?
+  url          String?
+}
+
+model BusinessCustomValue {
+  id         String      @id @default(cuid())
+  businessId String
+  business   Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  fieldId    String
+  field      CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value      String
+
+  @@unique([businessId, fieldId])
+}
+
+model GoogleReview {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  authorName String
+  rating     Float
+  text       String?
+  publishedAt DateTime?
+  profileUrl String?
+  sortOrder  Int      @default(0)
+}
+
+model PromotionPackage {
+  id              String          @id @default(cuid())
+  name            String
+  slug            String          @unique
+  description     String?
+  priceCents      Int
+  billingInterval BillingInterval @default(MONTHLY)
+  stripeProductId String?
+  stripePriceId   String?
+  active          Boolean         @default(true)
+  sortOrder       Int             @default(0)
+  promotions      BusinessPromotion[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model BusinessPromotion {
+  id                   String           @id @default(cuid())
+  businessId           String
+  business             Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  packageId            String
+  package              PromotionPackage @relation(fields: [packageId], references: [id])
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               PromotionStatus  @default(PENDING)
+  startsAt             DateTime?
+  endsAt               DateTime?
+  cityId               String?
+  autoRenew            Boolean          @default(true)
+  complimentary        Boolean          @default(false)
+  adminNote            String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+}
+
+model Coupon {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  percentOff     Int?
+  amountOffCents Int?
+  firstMonthFree Boolean   @default(false)
+  packageId      String?
+  expiresAt      DateTime?
+  usageLimit     Int?
+  usedCount      Int       @default(0)
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+}
+
+model ImportSource {
+  id          String          @id @default(cuid())
+  name        String
+  type        String
+  industryId  String?
+  spreadsheet String?
+  sheet       String?
+  autoSync    Boolean         @default(false)
+  frequencyHours Int          @default(6)
+  mappingId   String?
+  mapping     ImportMapping?  @relation(fields: [mappingId], references: [id])
+  jobs        ImportJob[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model ImportMapping {
+  id        String         @id @default(cuid())
+  name      String
+  industryId String?
+  mapping   String
+  sources   ImportSource[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model ImportJob {
+  id            String          @id @default(cuid())
+  sourceId      String?
+  source        ImportSource?   @relation(fields: [sourceId], references: [id])
+  filename      String?
+  userEmail     String?
+  industryId    String?
+  status        ImportJobStatus @default(PENDING)
+  rowsProcessed Int             @default(0)
+  createdCount  Int             @default(0)
+  updatedCount  Int             @default(0)
+  skippedCount  Int             @default(0)
+  failedCount   Int             @default(0)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  errors        ImportError[]
+  createdAt     DateTime        @default(now())
+}
+
+model ImportError {
+  id      String    @id @default(cuid())
+  jobId   String
+  job     ImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  row     Int?
+  message String
+  data    String?
+}
+
+model Lead {
+  id         String     @id @default(cuid())
+  businessId String?
+  business   Business?  @relation(fields: [businessId], references: [id])
+  name       String
+  email      String?
+  phone      String?
+  message    String?
+  sourcePage String?
+  status     LeadStatus @default(NEW)
+  createdAt  DateTime   @default(now())
+}
+
+model BlogCategory {
+  id    String     @id @default(cuid())
+  name  String
+  slug  String     @unique
+  posts BlogPost[]
+}
+
+model BlogPost {
+  id              String        @id @default(cuid())
+  title           String
+  slug            String        @unique
+  excerpt         String?
+  content         String
+  thumbnailUrl    String?
+  categoryId      String?
+  category        BlogCategory? @relation(fields: [categoryId], references: [id])
+  authorName      String?
+  status          BlogStatus    @default(DRAFT)
+  seoTitle        String?
+  metaDescription String?
+  publishedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model IntegrationSetting {
+  id        String   @id @default(cuid())
+  provider  String   @unique
+  config    String
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+model AnalyticsEvent {
+  id         String    @id @default(cuid())
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+  type       String
+  meta       String?
+  createdAt  DateTime  @default(now())
+
+  @@index([type, createdAt])
+}
+
+model SwapProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName     String
+  city            String?
+  preferredSpotId String?
+  preferredSpot   SwapSpot? @relation("PreferredSpot", fields: [preferredSpotId], references: [id], onDelete: SetNull)
+  ratingScore     Float?
+  ratingCount     Int      @default(0)
+  sellerSpots     SwapProfileSpot[]
+  listings        Listing[]
+  buyerThreads    SwapThread[] @relation("BuyerThreads")
+  sellerThreads   SwapThread[] @relation("SellerThreads")
+  messages        SwapMessage[]
+  ratingsGiven    SwapRating[] @relation("RatingsGiven")
+  ratingsReceived SwapRating[] @relation("RatingsReceived")
+  saves           SwapSave[]
+  flags           SwapSpotFlag[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SwapCategory {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  description String?
+  formMode    SwapFormMode @default(GOODS)
+  active      Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  fields      SwapField[]
+  listings    Listing[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model SwapField {
+  id         String       @id @default(cuid())
+  categoryId String
+  category   SwapCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+  slug       String
+  fieldType  String       @default("text")
+  options    String?
+  required   Boolean      @default(false)
+  sortOrder  Int          @default(0)
+  values     ListingFieldValue[]
+
+  @@unique([categoryId, slug])
+}
+
+model SwapSpot {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  address          String
+  city             String?
+  region           String?
+  postalCode       String?
+  notes            String?
+  photoUrl         String?
+  latitude         Float?
+  longitude        Float?
+  cameraMonitored  Boolean  @default(false)
+  wellLit          Boolean  @default(false)
+  publicIndoor     Boolean  @default(false)
+  meetingTip       String?
+  active           Boolean  @default(true)
+  preferredBy      SwapProfile[] @relation("PreferredSpot")
+  sellers          SwapProfileSpot[]
+  listings         ListingSpot[]
+  proposals        SwapProposal[]
+  flags            SwapSpotFlag[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model SwapSpotFlag {
+  id        String      @id @default(cuid())
+  spotId    String
+  spot      SwapSpot    @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  profileId String?
+  profile   SwapProfile? @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  reason    String
+  note      String?
+  resolved  Boolean     @default(false)
+  createdAt DateTime    @default(now())
+}
+
+model SwapProfileSpot {
+  profileId String
+  spotId    String
+  profile   SwapProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  spot      SwapSpot    @relation(fields: [spotId], references: [id], onDelete: Cascade)
+
+  @@id([profileId, spotId])
+}
+
+model Listing {
+  id                 String        @id @default(cuid())
+  sellerId           String
+  seller             SwapProfile   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  categoryId         String
+  category           SwapCategory  @relation(fields: [categoryId], references: [id])
+  title              String
+  slug               String        @unique
+  description        String
+  priceCents         Int
+  salePriceCents     Int?
+  sortPriceCents     Int
+  status             ListingStatus @default(AVAILABLE)
+  digitalNote        String?
+  availabilityNote   String?
+  images             ListingImage[]
+  values             ListingFieldValue[]
+  spots              ListingSpot[]
+  threads            SwapThread[]
+  saves              SwapSave[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([categoryId, status])
+  @@index([sortPriceCents])
+}
+
+model ListingImage {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url       String
+  sortOrder Int     @default(0)
+}
+
+model ListingFieldValue {
+  id        String    @id @default(cuid())
+  listingId String
+  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  fieldId   String
+  field     SwapField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  value     String
+
+  @@unique([listingId, fieldId])
+}
+
+model ListingSpot {
+  listingId String
+  spotId    String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  spot      SwapSpot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, spotId])
+}
+
+model SwapThread {
+  id            String           @id @default(cuid())
+  listingId     String
+  listing       Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyerId       String
+  buyer         SwapProfile      @relation("BuyerThreads", fields: [buyerId], references: [id], onDelete: Cascade)
+  sellerId      String
+  seller        SwapProfile      @relation("SellerThreads", fields: [sellerId], references: [id], onDelete: Cascade)
+  status        SwapThreadStatus @default(OPEN)
+  buyerArchived Boolean          @default(false)
+  messages      SwapMessage[]
+  proposals     SwapProposal[]
+  ratings       SwapRating[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([listingId, buyerId])
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+model SwapMessage {
+  id        String       @id @default(cuid())
+  threadId  String
+  thread    SwapThread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  senderId  String?
+  sender    SwapProfile? @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  body      String
+  createdAt DateTime     @default(now())
+}
+
+model SwapProposal {
+  id        String             @id @default(cuid())
+  threadId  String
+  thread    SwapThread         @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  spotId    String
+  spot      SwapSpot           @relation(fields: [spotId], references: [id])
+  meetAt    DateTime
+  status    SwapProposalStatus @default(PENDING)
+  note      String?
+  createdAt DateTime           @default(now())
+}
+
+model SwapRating {
+  id              String      @id @default(cuid())
+  threadId        String
+  thread          SwapThread  @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  fromId          String
+  from            SwapProfile @relation("RatingsGiven", fields: [fromId], references: [id], onDelete: Cascade)
+  toId            String
+  to              SwapProfile @relation("RatingsReceived", fields: [toId], references: [id], onDelete: Cascade)
+  onTime          Boolean
+  polite          Boolean
+  communicative   Boolean
+  note            String?
+  createdAt       DateTime    @default(now())
+
+  @@unique([threadId, fromId])
+}
+
+model SwapSave {
+  id        String      @id @default(cuid())
+  profileId String
+  profile   SwapProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing     @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+
+  @@unique([profileId, listingId])
+}

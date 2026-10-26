@@ -1,0 +1,1727 @@
+Master Development Specification
+Reusable Local Business Directory Platform
+Project type: Multi-industry local business directory platform
+Primary framework: Next.js
+Initial vertical: Roofing contractors
+Core principle: Build the directory engine once, then reuse it for different industries, cities, states, brands, and domains without rewriting the application.
+1. Project Vision
+The platform will be a modern local-business discovery system combining:
+- Searchable local business listings
+- Video-first business profiles
+- Google ratings/review content
+- Business photo galleries
+- Interactive map/list search
+- Rich business profiles
+- Sponsored and Featured listings
+- Stripe-powered advertising subscriptions
+- Custom CMS
+- Excel/CSV importing
+- Google Sheets/Google Drive synchronization
+- Local SEO landing pages
+- Built-in blog
+- Portable deployment/install system
+The system must not contain hard-coded roofing-specific logic.
+Roofing will simply be the first configured industry.
+Future examples:
+Roofers
+Plumbers
+HVAC Contractors
+Electricians
+Dentists
+Attorneys
+Real Estate Agents
+Restaurants
+Auto Repair
+Home Improvement Contractors
+2. Core Technology Stack
+Layer	Technology
+Framework	Next.js App Router
+Language	TypeScript
+UI	Tailwind CSS
+UI Components	shadcn/ui + custom components
+Database	PostgreSQL
+ORM	Prisma
+Authentication	Auth.js
+Forms	React Hook Form
+Validation	Zod
+Rich Text Editor	TipTap
+Maps	Google Maps
+Business Data	Google Places API
+Reviews	Google Places
+Spreadsheet Import	XLSX / SheetJS
+Google Sheets	Google Sheets API
+Google Drive	Google Drive API
+Payments	Stripe
+Video	YouTube / Vimeo / MP4 initially
+Optional Advanced Video	Mux
+Image Handling	Next/Image
+Hosting	Hostinger VPS or similar
+Deployment	Docker / Docker Compose
+Scheduled Tasks	Cron
+Monitoring	Sentry or equivalent
+Analytics	Google Analytics
+SEO Tools	Google Search Console
+
+
+3. Application Architecture
+                        ┌───────────────────────┐
+                        │     PUBLIC WEBSITE    │
+                        │                       │
+                        │ Search / Map / Blog   │
+                        │ Business Profiles     │
+                        └──────────┬────────────┘
+                                   │
+                                   ▼
+                        ┌───────────────────────┐
+                        │       NEXT.JS         │
+                        │                       │
+                        │ Pages / API / CMS     │
+                        └──────────┬────────────┘
+                                   │
+                ┌──────────────────┼───────────────────┐
+                │                  │                   │
+                ▼                  ▼                   ▼
+         PostgreSQL          Google APIs            Stripe
+                             Places/Maps         Billing/Checkout
+                ▲
+                │
+        ┌───────┴────────┐
+        │ IMPORT ENGINE  │
+        │                │
+        │ CSV / Excel    │
+        │ Google Sheets  │
+        │ Google Drive   │
+        └────────────────┘
+The PostgreSQL database remains the primary source of truth.
+External APIs enrich existing listings rather than acting as the live database for each visitor.
+4. Public Website Structure
+Recommended URL hierarchy:
+/
+├── /roofers
+├── /plumbers
+├── /dentists
+│
+├── /roofers/florida
+├── /roofers/florida/orlando
+├── /roofers/florida/sarasota
+│
+├── /roofers/florida/orlando/company-name
+│
+├── /categories/metal-roofing
+├── /cities/orlando-fl
+├── /search
+│
+├── /blog
+├── /blog/category/roofing-tips
+├── /blog/article-slug
+│
+├── /advertise
+├── /claim-business
+├── /login
+└── /contact
+5. Homepage
+The homepage should be configurable for each deployed directory.
+Primary sections:
+HEADER / NAVIGATION
+
+HERO
+Find trusted local businesses
+[ Service / Business ]
+[ Location ]
+[ Search ]
+
+FEATURED BUSINESSES
+
+SPONSORED BUSINESSES
+
+POPULAR CATEGORIES
+
+BROWSE BY LOCATION
+
+OPTIONAL MAP
+
+LATEST BLOG POSTS
+
+CALL TO ACTION
+List Your Business
+
+ADVERTISE CTA
+
+FOOTER
+Homepage Featured businesses receive a premium placement separate from ordinary Featured listings.
+6. Search Results Page
+This becomes one of the most important experiences in the system.
+Desktop
+Use a split layout:
+-------------------------------------------------------------
+| RESULTS                                   | STICKY MAP     |
+|                                           |                |
+| Business Card                             |      ●         |
+| Business Card                             |   ●      ●     |
+| Business Card                             |       ●        |
+| Business Card                             |                |
+-------------------------------------------------------------
+Suggested width:
+Listings: 55–60%
+Map:      40–45%
+Mobile
+[ LIST ] [ MAP ]
+Users toggle between views.
+7. Search Filters
+Initial filters:
+Keyword
+Industry
+Category
+Service
+City
+State
+ZIP
+Distance
+Minimum Rating
+Open Now
+Verified
+Featured
+Video Available
+Future options:
+Years in Business
+Emergency Service
+Financing Available
+License Status
+Specialty
+Custom industry fields
+8. Search Result Card
+Primary listing layout:
+┌──────────────────────────────────────────────────────────────┐
+│ SPONSORED                                          ♡ Save    │
+│                                                              │
+│ [ VIDEO / IMAGE ]   Business Name                            │
+│ [ THUMBNAIL ▶ ]     ✓ Verified                               │
+│                     ★ 4.9 (185 Google Reviews)                │
+│                                                              │
+│                     Metal Roofing • Roof Repair              │
+│                                                              │
+│                     Short business description...            │
+│                                                              │
+│                     Sarasota, FL • 3.8 miles                 │
+│                                                              │
+│                                  [ View Profile ]             │
+│                                  [ Request Quote ]            │
+│                                  [ Call Now ]                 │
+└──────────────────────────────────────────────────────────────┘
+9. Search Result Media Logic
+The media system should choose the best available visual automatically.
+Priority:
+1. Featured Video / Video Thumbnail
+2. Uploaded Hero Image
+3. Google Places Photo
+4. Business Logo
+5. Directory Placeholder
+This priority should be configurable globally.
+CMS:
+Settings
+→ Directory Appearance
+→ Listing Media Priority
+10. Sponsored Section
+A dedicated sponsored area can appear above the normal directory results.
+SPONSORED BUSINESSES
+
+[ Sponsored Business ]
+[ Sponsored Business ]
+[ Sponsored Business ]
+Sponsored listings must always be visibly labeled:
+SPONSORED
+11. Featured Section
+Separate premium section:
+FEATURED BUSINESSES
+
+[ Featured Business ]
+[ Featured Business ]
+[ Featured Business ]
+Featured listings receive a visual ribbon:
+FEATURED
+The same listing may also remain visible in normal results.
+12. Promotion Ribbon System
+Possible states:
+Normal
+
+Verified
+
+Featured
+
+Sponsored
+
+Sponsored + Featured
+Suggested display rules:
+Sponsored
+→ prominent SPONSORED ribbon
+
+Featured
+→ FEATURED ribbon
+
+Sponsored + Featured
+→ Sponsored ribbon + smaller Featured badge
+13. Directory Ranking
+The CMS should allow different ranking strategies.
+Example:
+Directory Ranking
+
+Sponsored:
+● Separate section
+○ First in results
+○ Rotate throughout results
+
+Featured:
+● Separate section
+☑ Highlight inside organic results
+
+Organic Sort:
+● Relevance
+○ Google Rating
+○ Distance
+○ Alphabetical
+○ Newest
+Promotion priority numbers should also be supported.
+Example:
+Sponsored Priority: 100
+Featured Priority: 50
+14. Business Profile Page
+Recommended structure:
+1. Business Header
+2. Media Gallery
+3. About
+4. Services
+5. Company Details
+6. Credentials
+7. Awards
+8. Google Reviews
+9. Contact Information
+10. Hours
+11. Service Areas
+12. Location Map
+13. Additional Media
+14. Request Quote
+15. Similar Businesses
+15. Business Header
+Example:
+GMR Metal Roofs Florida
+
+★★★★★ 4.9
+185 Google Reviews
+
+✓ Verified
+SPONSORED
+★ Featured
+
+Metal Roofing Contractor
+Sarasota, Florida
+
+[ Call Now ]
+[ Website ]
+[ Directions ]
+[ Request Quote ]
+16. Profile Media Gallery
+Profiles should support both video and multiple images.
+Example:
+┌───────────────────────────────┬───────────────┐
+│                               │ [ Image ]     │
+│                               ├───────────────┤
+│      FEATURED VIDEO ▶         │ [ Image ]     │
+│                               ├───────────────┤
+│                               │ [ Image ]     │
+└───────────────────────────────┴───────────────┘
+
+[ View All Photos & Videos ]
+Gallery content may contain:
+Featured video
+Additional videos
+Uploaded photos
+Google Places photos
+Logo
+Before/after photos
+External media
+17. Business Media CMS
+Inside every business:
+MEDIA
+
+Featured Video
+[ URL ]
+
+Additional Videos
+
+[ + Add Video ]
+
+Uploaded Photos
+[ Upload ]
+
+Google Places Photos
+☑ Enable
+
+Maximum Photos
+[ 8 ]
+
+Gallery Order
+○ Automatic
+● Custom
+
+[ Drag to reorder ]
+18. Supported Video Types
+Version 1:
+YouTube
+Vimeo
+Direct MP4
+Future:
+Mux
+Direct CMS video upload
+Hosted transcoding
+19. Company Details Section
+Example:
+COMPANY DETAILS
+
+Year Established
+2006
+
+Years in Business
+20
+
+Hours
+Mon–Fri   8 AM–6 PM
+Saturday  10 AM–4 PM
+Sunday    Closed
+20. Credentials
+Example:
+CREDENTIALS
+
+✓ Certified Happiness Expert
+✓ Professional Problem Solver
+✓ Licensed Contractor
+✓ Manufacturer Certified
+Credentials should be repeatable CMS entries.
+21. Awards
+HONORS & AWARDS
+
+🏆 2026 Best Roofing Contractor
+🏆 2025 Customer Service Award
+Support:
+Award name
+Organization
+Year
+Description
+Optional image
+Optional URL
+22. Contact Section
+CONTACT INFORMATION
+
+Company Name
+Sample Member Inc.
+
+Phone
+555-555-5555
+
+Website
+Visit Website
+
+Email
+Optional
+
+Address
+123 S Main St
+Los Angeles, CA 90012
+23. Social Profiles
+Supported:
+Facebook
+Instagram
+LinkedIn
+YouTube
+TikTok
+X
+Pinterest
+Other
+Icons should only appear when a URL exists.
+24. Location Map
+Every profile should support a map section.
+LOCATION
+
+[ INTERACTIVE MAP ]
+
+123 S Main St
+Los Angeles, CA 90012
+
+[ Get Directions ]
+Business records should store:
+latitude
+longitude
+Coordinates should generally be populated during import/enrichment rather than calculated on every page request.
+25. Service Areas
+Businesses can define multiple service locations.
+Example:
+SERVICE AREAS
+
+Orlando
+Winter Park
+Sanford
+Lake Mary
+Kissimmee
+Altamonte Springs
+Future support:
+Radius
+Cities
+ZIP codes
+Counties
+States
+Custom polygons
+26. Dynamic Industry Fields
+Industries require different profile information.
+Example roofing fields:
+License Number
+Insurance Status
+Emergency Service
+Financing
+Roofing Types
+Manufacturer Certifications
+Dentist example:
+Insurance Accepted
+Emergency Appointments
+Cosmetic Dentistry
+Sedation
+Languages
+Therefore custom fields should be database-driven rather than hard-coded.
+27. Custom CMS Sitemap
+DASHBOARD
+
+BUSINESSES
+├── All Businesses
+├── Add Business
+├── Featured
+├── Sponsored
+├── Pending Review
+├── Claimed Businesses
+└── Archived
+
+INDUSTRIES
+├── Industries
+├── Categories
+├── Services
+└── Custom Fields
+
+LOCATIONS
+├── States
+├── Counties
+├── Cities
+├── ZIP Codes
+└── Service Areas
+
+PROMOTIONS
+├── Packages
+├── Active Promotions
+├── Sponsored Listings
+├── Featured Listings
+├── Homepage Featured
+├── City Sponsors
+├── Expiring Soon
+├── Promotion History
+├── Coupons & Discounts
+└── Complimentary Promotions
+
+IMPORTS
+├── Upload CSV
+├── Upload Excel
+├── Google Sheets
+├── Google Drive Sources
+├── Saved Import Mappings
+├── Import History
+└── Failed Rows
+
+GOOGLE
+├── Places Data
+├── Review Sync
+├── Photo Sync
+├── Missing Place IDs
+└── Sync Status
+
+MEDIA
+├── Photos
+├── Videos
+└── Logos
+
+BLOG
+├── All Posts
+├── Add New
+├── Categories
+├── Drafts
+├── Scheduled
+└── Media
+
+SEO
+├── Metadata
+├── City Pages
+├── Category Pages
+├── Industry Pages
+├── Redirects
+└── Sitemap Settings
+
+LEADS
+├── All Leads
+├── New
+├── Contacted
+└── Export
+
+SETTINGS
+├── General
+├── Branding
+├── Directory Appearance
+├── Map Settings
+├── Integrations
+├── Billing & Stripe
+├── Email
+├── Users
+└── Deployment Information
+28. CMS Business Editor
+Suggested tab structure:
+Business
+├── General
+├── Description
+├── Categories
+├── Services
+├── Contact
+├── Locations
+├── Hours
+├── Media
+├── Credentials
+├── Awards
+├── Social
+├── Google
+├── Promotions
+├── SEO
+└── Custom Fields
+29. Promotion Packages
+Initial pricing:
+Package	Price
+Featured Listing	$45/month
+Sponsored Listing	$95/month
+Homepage Featured	$195/month
+Exclusive City Sponsor	$495/month
+
+
+Prices must be editable through the CMS.
+30. Stripe Settings
+CMS location:
+Settings
+→ Billing & Stripe
+Fields:
+Stripe Publishable Key
+Stripe Secret Key
+Webhook Secret
+
+[ Test Connection ]
+Secret credentials must remain server-side.
+31. Package Editor
+Example:
+Sponsored Listing
+
+Name
+[ Sponsored Listing ]
+
+Price
+[ $95.00 ]
+
+Billing
+[ Monthly ]
+
+Stripe Product ID
+[ __________ ]
+
+Stripe Price ID
+[ __________ ]
+
+☑ Active
+
+[ Save ]
+No package price should be hard-coded into the frontend.
+32. Promotion Activation Methods
+Support:
+1. Stripe Subscription
+
+2. Coupon/Discount Subscription
+
+3. Manual Admin Override
+
+4. Complimentary Promotion
+This allows administrators to give free or temporary promotions without collecting payment.
+33. Complimentary Promotions
+Admin controls:
+Business
+Package
+Start Date
+End Date
+Reason / Note
+Created By
+Example:
+Business: ABC Roofing
+Package: Sponsored
+Cost: Complimentary
+Duration: 30 days
+Reason: Launch promotion
+34. Coupons and Discounts
+Support:
+Percentage discount
+Fixed-dollar discount
+First month free
+Limited duration discount
+Package-specific coupon
+Expiration date
+Usage limit
+One-time use
+Recurring discount
+35. Exclusive City Sponsor
+Only one active exclusive sponsor may occupy a city at a time.
+Example:
+Orlando, Florida
+
+Exclusive Sponsor
+ABC Roofing
+
+$495/month
+
+Started
+September 3, 2026
+
+Next Renewal
+October 3, 2026
+The exclusivity rule should be enforced server-side.
+36. Stripe Subscription Flow
+Business selects package
+          ↓
+Stripe Checkout
+          ↓
+Payment successful
+          ↓
+Stripe Webhook
+          ↓
+Promotion becomes ACTIVE
+          ↓
+Directory placement activates
+Cancellation:
+Subscription canceled
+          ↓
+Stripe Webhook
+          ↓
+Promotion becomes CANCELED/EXPIRED
+          ↓
+Premium placement removed
+37. Promotion Statuses
+PENDING
+ACTIVE
+PAST_DUE
+CANCELED
+EXPIRED
+COMPLIMENTARY
+38. Advertise Page
+URL:
+/advertise
+Example:
+Grow Your Business
+
+FEATURED
+$45/month
+
+[ Get Featured ]
+
+
+SPONSORED
+$95/month
+
+[ Get Sponsored ]
+
+
+HOMEPAGE FEATURED
+$195/month
+
+[ Get Homepage Placement ]
+
+
+EXCLUSIVE CITY SPONSOR
+$495/month
+
+[ Choose a City ]
+39. Spreadsheet Import Engine
+Supported formats:
+CSV
+XLS
+XLSX
+Google Sheets
+Google Drive spreadsheets
+40. Recommended Master Spreadsheet
+external_id
+industry
+business_name
+slug
+description
+phone
+email
+website
+address_1
+address_2
+city
+state
+zip
+country
+latitude
+longitude
+google_place_id
+video_url
+logo_url
+hero_image_url
+categories
+services
+service_areas
+featured
+sponsored
+verified
+published
+41. External ID
+Every imported business should ideally have a permanent ID.
+Example:
+ROOF-000001
+ROOF-000002
+ROOF-000003
+Imports should update primarily using external_id.
+Do not rely on business names for matching because names can change.
+42. Column Mapping
+Spreadsheet columns should not have to match database field names.
+Example:
+Spreadsheet            Directory
+
+Company             → Business Name
+Main Phone          → Phone
+URL                 → Website
+Town                → City
+ST                  → State
+Google ID           → Google Place ID
+Mappings can be saved and reused.
+43. Import Workflow
+Upload File
+     ↓
+Read Headers
+     ↓
+Choose Industry
+     ↓
+Map Columns
+     ↓
+Validate
+     ↓
+Detect Duplicates
+     ↓
+Preview
+     ↓
+Import
+     ↓
+Google Enrichment
+     ↓
+Publish
+44. Import Preview
+Example:
+1,283 rows detected
+
+New Businesses        912
+Updates               311
+Duplicates             22
+Invalid Addresses      17
+Missing Business Name   6
+Missing Google ID      184
+
+[ Download Errors ]
+
+[ Import Valid Rows ]
+45. Import History
+Track:
+Source
+Filename
+User
+Industry
+Rows processed
+Created
+Updated
+Skipped
+Failed
+Started
+Completed
+Duration
+46. Google Sheets Integration
+Workflow:
+CMS
+→ Connect Google Drive
+→ Select Spreadsheet
+→ Select Sheet
+→ Choose Industry
+→ Map Columns
+→ Save Source
+→ Enable Sync
+47. Google Drive Synchronization
+Example configuration:
+Spreadsheet
+Roofing Master Directory
+
+Sheet
+Businesses
+
+Industry
+Roofing Contractors
+
+Automatic Sync
+☑ Enabled
+
+Frequency
+Every 6 Hours
+48. Correct Data Flow
+Do not read a Google Sheet every time somebody visits the site.
+Use:
+Google Sheet
+     ↓
+Sync Service
+     ↓
+PostgreSQL
+     ↓
+Next.js
+     ↓
+Visitor
+49. Google Places Enrichment
+Google data can enrich imported businesses with information such as:
+Google Place ID
+Rating
+Review Count
+Review Content
+Coordinates
+Opening Hours
+Maps Data
+Available Photos
+Directory-owned fields remain separate:
+Description
+Video
+Featured Status
+Sponsored Status
+Services
+Service Areas
+Custom Fields
+Premium Packages
+50. Review System
+Profiles should display approximately five review snippets when available.
+Example:
+GOOGLE REVIEWS
+
+★★★★★
+"Fantastic company..."
+
+★★★★★
+"Excellent workmanship..."
+
+★★★★★
+"Would definitely recommend..."
+
+★★★★★
+"Great experience..."
+
+★★★★★
+"Professional crew..."
+
+[ View More Reviews ]
+Google data should be cached/synchronized rather than fetched for every request.
+51. Blog Module
+CMS:
+BLOG
+├── All Posts
+├── Add New
+├── Categories
+├── Drafts
+├── Scheduled
+└── Media
+52. Blog Editor
+Fields:
+Title
+Slug
+Category
+Thumbnail
+Excerpt
+Content
+Author
+Status
+Publish Date
+SEO Title
+Meta Description
+53. WYSIWYG Editor
+TipTap recommended.
+Required tools:
+H1 / H2 / H3
+Bold
+Italic
+Underline
+Links
+Bullets
+Numbered Lists
+Images
+Blockquotes
+Tables
+Horizontal Rule
+YouTube Embed
+Undo
+Redo
+54. Blog Statuses
+Draft
+Scheduled
+Published
+Archived
+55. Blog Pages
+/blog
+
+/blog/article-slug
+
+/blog/category/category-name
+Optional industry-specific content:
+/roofers/blog
+/plumbers/blog
+/dentists/blog
+56. Blog Card
+[ THUMBNAIL ]
+
+Best Roofing Materials for Florida Homes
+
+Roofing Tips
+
+Article excerpt...
+
+September 3, 2026
+
+[ Read More ]
+57. SEO System
+Every business should have:
+SEO Title
+Meta Description
+Canonical URL
+Open Graph Image
+Structured Data
+58. Programmatic Local SEO
+Possible landing pages:
+/roofers/florida
+
+/roofers/florida/orlando
+
+/roofers/florida/sarasota
+
+/roofers/florida/orlando/metal-roofing
+
+/roofers/florida/orlando/roof-repair
+Only generate/index pages that have enough legitimate listings/content to provide useful search value.
+59. Structured Data
+Business profiles should support LocalBusiness structured data.
+Blog articles should support Article/BlogPosting structured data.
+Navigation should support Breadcrumb structured data.
+60. Sitemap System
+Generate XML sitemaps for:
+Business profiles
+Industries
+Categories
+Cities
+States
+Blog posts
+Blog categories
+Large sites should use sitemap indexes.
+61. Database Schema Overview
+Core models:
+User
+
+Industry
+Category
+Service
+
+Business
+BusinessCategory
+BusinessService
+BusinessLocation
+BusinessHours
+BusinessMedia
+BusinessSocialProfile
+BusinessCredential
+BusinessAward
+BusinessCustomValue
+
+GoogleReview
+
+PromotionPackage
+BusinessPromotion
+Coupon
+
+ImportSource
+ImportMapping
+ImportJob
+ImportError
+
+Location
+City
+County
+State
+
+Lead
+
+BlogPost
+BlogCategory
+
+SiteSetting
+IntegrationSetting
+62. Core Prisma Concept
+A simplified foundation:
+model Industry {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  active      Boolean    @default(true)
+
+  businesses  Business[]
+  categories  Category[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Business {
+  id                String   @id @default(cuid())
+
+  externalId        String?
+  industryId        String
+  industry          Industry @relation(fields: [industryId], references: [id])
+
+  name              String
+  slug              String
+
+  description       String?
+
+  phone             String?
+  email             String?
+  websiteUrl        String?
+
+  googlePlaceId     String?
+  googleRating      Float?
+  googleReviewCount Int?
+
+  address1          String?
+  address2          String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String @default("US")
+
+  latitude          Float?
+  longitude         Float?
+
+  verified          Boolean @default(false)
+  featured          Boolean @default(false)
+  sponsored         Boolean @default(false)
+  homepageFeatured  Boolean @default(false)
+  published         Boolean @default(false)
+
+  customFields      Json?
+
+  media             BusinessMedia[]
+  reviews           GoogleReview[]
+  promotions        BusinessPromotion[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([industryId, slug])
+  @@index([externalId])
+  @@index([googlePlaceId])
+  @@index([city, state])
+}
+63. Media Model
+model BusinessMedia {
+  id           String   @id @default(cuid())
+
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id])
+
+  type         MediaType
+  source       MediaSource
+
+  url          String?
+  thumbnailUrl String?
+
+  title        String?
+  caption      String?
+
+  featured     Boolean @default(false)
+  sortOrder    Int     @default(0)
+
+  createdAt    DateTime @default(now())
+}
+
+enum MediaType {
+  VIDEO
+  IMAGE
+  LOGO
+}
+
+enum MediaSource {
+  UPLOAD
+  YOUTUBE
+  VIMEO
+  GOOGLE_PLACES
+  EXTERNAL
+}
+64. Promotion Package Model
+model PromotionPackage {
+  id              String @id @default(cuid())
+
+  name            String
+  slug            String @unique
+  description     String?
+
+  priceCents      Int
+  billingInterval BillingInterval @default(MONTHLY)
+
+  stripeProductId String?
+  stripePriceId   String?
+
+  active          Boolean @default(true)
+  sortOrder       Int     @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+  ONE_TIME
+}
+65. Promotion Subscription Model
+model BusinessPromotion {
+  id                   String @id @default(cuid())
+
+  businessId           String
+  business             Business @relation(fields: [businessId], references: [id])
+
+  packageId            String
+  package              PromotionPackage @relation(fields: [packageId], references: [id])
+
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+
+  status               PromotionStatus @default(PENDING)
+
+  startsAt             DateTime?
+  endsAt               DateTime?
+
+  cityId               String?
+
+  autoRenew            Boolean @default(true)
+  complimentary        Boolean @default(false)
+  adminNote            String?
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+66. Blog Models
+model BlogPost {
+  id              String @id @default(cuid())
+
+  title           String
+  slug            String @unique
+
+  excerpt         String?
+  content         Json
+
+  thumbnailUrl    String?
+
+  categoryId      String?
+  category        BlogCategory? @relation(
+    fields: [categoryId],
+    references: [id]
+  )
+
+  status          BlogStatus @default(DRAFT)
+
+  seoTitle        String?
+  metaDescription String?
+
+  publishedAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model BlogCategory {
+  id    String @id @default(cuid())
+  name  String
+  slug  String @unique
+
+  posts BlogPost[]
+}
+
+enum BlogStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+67. Suggested Codebase Structure
+directory-platform/
+
+app/
+├── (public)/
+│   ├── page.tsx
+│   ├── search/
+│   ├── blog/
+│   └── [industry]/
+│
+├── admin/
+│   ├── businesses/
+│   ├── industries/
+│   ├── locations/
+│   ├── promotions/
+│   ├── imports/
+│   ├── blog/
+│   ├── seo/
+│   └── settings/
+│
+└── api/
+    ├── businesses/
+    ├── imports/
+    ├── google/
+    ├── stripe/
+    ├── cron/
+    └── webhooks/
+
+components/
+├── directory/
+├── business/
+├── map/
+├── media/
+├── reviews/
+├── promotion/
+├── blog/
+└── admin/
+
+lib/
+├── database/
+├── google/
+├── stripe/
+├── imports/
+├── seo/
+├── validation/
+├── media/
+└── industries/
+
+prisma/
+├── schema.prisma
+├── seed.ts
+└── migrations/
+
+scripts/
+├── install.ts
+├── setup.ts
+└── deploy.ts
+
+public/
+
+docker/
+Dockerfile
+docker-compose.yml
+
+.env.example
+package.json
+README.md
+install.sh
+deploy.sh
+68. Deployment Goal
+The finished software should be easily deployable to:
+Hostinger VPS
+DigitalOcean
+AWS
+Linode
+Vultr
+Other Docker-capable hosting
+Vercel may also be supported, but the portable VPS deployment is important for this project.
+69. Docker Deployment
+Recommended:
+Docker Container
+├── Next.js
+│
+PostgreSQL
+│
+Reverse Proxy
+│
+SSL
+Docker Compose makes duplicated installations much easier.
+Example deployment:
+docker compose up -d
+70. First-Run Installer
+The first launch should display:
+WELCOME TO DIRECTORY SETUP
+
+Step 1
+Directory Name
+
+Step 2
+Industry
+
+Step 3
+Domain
+
+Step 4
+Branding
+
+Step 5
+Database
+
+Step 6
+Create Administrator
+
+Step 7
+Google Integration
+
+Step 8
+Stripe Integration
+
+Step 9
+Directory Defaults
+
+[ Complete Installation ]
+71. Branding Setup
+Installer should allow:
+Directory Name
+Logo
+Favicon
+Primary Color
+Secondary Color
+Accent Color
+Default Placeholder Image
+Contact Email
+Domain
+72. Environment Configuration
+.env.example should include areas for:
+DATABASE_URL
+
+NEXTAUTH_SECRET
+
+GOOGLE_MAPS_API_KEY
+GOOGLE_PLACES_API_KEY
+
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+
+STRIPE_SECRET_KEY
+STRIPE_PUBLISHABLE_KEY
+STRIPE_WEBHOOK_SECRET
+
+APP_URL
+CRON_SECRET
+Sensitive credentials should not be committed to source control.
+73. Admin Roles
+Initial roles:
+SUPER_ADMIN
+ADMIN
+EDITOR
+SALES
+Possible permissions:
+SUPER_ADMIN
+Everything
+
+ADMIN
+Businesses / blog / promotions / imports
+
+EDITOR
+Listings + content
+
+SALES
+Businesses + promotions + leads
+74. Lead Generation
+Every business profile should optionally support:
+Request Quote
+Contact Business
+Call
+Website Click
+Directions
+These actions should be trackable.
+Lead record:
+Business
+Name
+Email
+Phone
+Message
+Source Page
+Date
+Status
+75. Analytics
+Track:
+Profile views
+Video plays
+Phone clicks
+Website clicks
+Directions clicks
+Quote requests
+Sponsored impressions
+Sponsored clicks
+Featured impressions
+Featured clicks
+Conversion rates
+This will eventually help prove the value of paid packages.
+76. Phase 1 — Foundation
+Build:
+Next.js
+TypeScript
+Tailwind
+PostgreSQL
+Prisma
+Authentication
+Admin shell
+User permissions
+Environment management
+Basic settings
+Deliverable: functioning application + CMS login.
+77. Phase 2 — Directory Data Model
+Build:
+Industries
+Categories
+Services
+Businesses
+Locations
+Business details
+Custom fields
+Credentials
+Awards
+Hours
+Social profiles
+Deliverable: businesses can be created and edited manually.
+78. Phase 3 — Public Directory
+Build:
+Homepage
+Industry pages
+State pages
+City pages
+Business cards
+Search
+Filters
+Profiles
+Responsive design
+Deliverable: complete working public directory.
+79. Phase 4 — Maps
+Build:
+Map/list results
+Business markers
+Card-marker synchronization
+Map popups
+Profile map
+Directions integration
+Mobile Map/List toggle
+Deliverable: Zillow/Airbnb-style local browsing experience.
+80. Phase 5 — Media
+Build:
+Featured videos
+Multiple videos
+Photos
+Google Places photos
+Gallery
+Lightbox
+Video thumbnail
+Media priority system
+CMS media manager
+Deliverable: rich visual business profiles.
+81. Phase 6 — Import System
+Build:
+CSV
+Excel
+Column mapping
+Validation
+Duplicate detection
+Import preview
+Import errors
+Saved mappings
+Import history
+Deliverable: thousands of businesses can be imported efficiently.
+82. Phase 7 — Google Integration
+Build:
+Place matching
+Place IDs
+Ratings
+Review counts
+Review snippets
+Photos
+Hours
+Coordinates
+Scheduled enrichment
+Deliverable: imported business data becomes substantially richer automatically.
+83. Phase 8 — Google Sheets / Drive
+Build:
+Google OAuth
+Drive connection
+Spreadsheet picker
+Sheet picker
+Saved sources
+Automatic synchronization
+Cron
+Sync history
+Error reporting
+Deliverable: Google Sheets can operate as a batch-management source.
+84. Phase 9 — Promotions
+Build:
+Featured
+Sponsored
+Homepage Featured
+Exclusive City Sponsor
+Ribbons
+Promotion sections
+Priority
+Start/end dates
+Manual activation
+Complimentary promotions
+Deliverable: directory monetization placements work.
+85. Phase 10 — Stripe
+Build:
+Stripe settings
+Editable package prices
+Checkout
+Subscriptions
+Webhook handling
+Cancellation
+Past-due handling
+Coupons
+Discounts
+Complimentary overrides
+Exclusive city inventory
+Initial packages:
+Featured              $45/mo
+Sponsored             $95/mo
+Homepage Featured    $195/mo
+Exclusive City       $495/mo
+Deliverable: businesses can purchase promotions automatically.
+86. Phase 11 — Blog
+Build:
+Posts
+Categories
+Thumbnail
+TipTap editor
+Drafts
+Scheduling
+SEO
+Public blog
+Category pages
+Deliverable: built-in publishing system.
+87. Phase 12 — SEO
+Build:
+Metadata
+Canonical URLs
+LocalBusiness schema
+Article schema
+Breadcrumb schema
+Sitemaps
+City landing pages
+Category landing pages
+SEO CMS
+Redirects
+Deliverable: directory is ready for search-engine indexing.
+88. Phase 13 — Installer
+Build:
+First-run wizard
+Database migration
+Database seed
+Admin creation
+Branding
+Google setup
+Stripe setup
+Default packages
+Industry setup
+Deliverable: new directories can be launched without manually editing the source code.
+89. Phase 14 — Deployment Package
+Provide:
+Dockerfile
+docker-compose.yml
+install.sh
+deploy.sh
+.env.example
+Database migrations
+Seed data
+Backup instructions
+Update instructions
+Complete README
+Deliverable: portable installation package.
+90. Phase 15 — First Production Vertical
+Launch the first implementation as a roofing directory.
+Initial taxonomy might include:
+Roofing Contractors
+
+Shingle Roofing
+Metal Roofing
+Standing Seam
+Stone-Coated Steel
+Tile Roofing
+Roof Repair
+Commercial Roofing
+Flat Roofing
+TPO Roofing
+Storm Damage
+Gutters
+But these values live in the database—not application code.
+91. Phase 16 — Platform Replication Test
+After roofing works:
+Create a second completely different industry such as:
+Plumbers
+without modifying core application code.
+If that works successfully, the platform architecture has achieved its main objective.
+92. Future Expansion
+Architecture should leave room for:
+Business Claiming
+Business Owner Dashboard
+Customer Accounts
+Favorites
+Saved Businesses
+Messaging
+Review Collection
+Call Tracking
+Stripe Customer Portal
+Annual Advertising Packages
+Automatic Renewals
+Sales CRM
+Lead Distribution
+Multi-site Management
+Multiple Domains
+White Label Installations
+AI-generated listing descriptions
+AI-assisted blog content
+Bulk SEO tools
+Advanced analytics
+Business performance reports
+93. Final Product Philosophy
+The system should ultimately work like this:
+INSTALL SOFTWARE
+      ↓
+NAME DIRECTORY
+      ↓
+CHOOSE INDUSTRY
+      ↓
+BRAND DIRECTORY
+      ↓
+CONNECT GOOGLE
+      ↓
+CONNECT STRIPE
+      ↓
+IMPORT BUSINESSES
+      ↓
+PUBLISH
+Then for another vertical:
+NEW INSTALLATION
+
+"Central Florida Plumbing Directory"
+
+Import plumbers.
+
+Launch.
+No redevelopment.
+No new CMS.
+No new database architecture.
+No rebuilding business profiles.
+The industry, categories, branding, listings, pricing, content, and configuration change — the software does not.
+Recommended first build milestone
+The first milestone should be an MVP roofing directory containing the complete underlying multi-industry architecture but only enough functionality to prove the entire workflow:
+CMS → create/import business → enrich listing → show search result → map → business profile → Featured/Sponsored toggle → publish.
+Once that complete vertical slice works correctly, we expand into Google Drive automation, Stripe subscriptions, blogging, SEO automation, and the portable installer.
+That approach gives us something functional early without sacrificing the larger platform architecture.
